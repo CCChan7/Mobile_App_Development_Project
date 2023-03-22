@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as EmailValidator from 'email-validator';
 
 export default class LoginScreen extends Component {
@@ -18,7 +18,7 @@ export default class LoginScreen extends Component {
         this._onPressButton = this._onPressButton.bind(this)
     }
 
-    _onPressButton(){
+    _onPressButton = async () => {
         this.setState({submitted: true})
         this.setState({error: ""})
 
@@ -43,29 +43,44 @@ export default class LoginScreen extends Component {
         console.log("Validated and ready to send to the API")
 
         this.state ={
-            isLoading: true,
-            loginData: []
+            email: this.state.email,
+            password: this.state.password
           }
-        }
-        getData(){
-          return fetch('http://127.0.0.1:3333/api/1.0.0/login')
-            .then((response) => response.json())
-            .then((responseJson) => {
+        
+        return fetch('http://127.0.0.1:3333/api/1.0.0/login',
+        {
+          method : 'post',
+          headers: { 'Content-Type': 'application/json'},
+          body: JSON.stringify(this.state)
+        })
+        .then((response) => {
       
-              this.setState({
-                isLoading: false,
-                loginData: responseJson,
-              });
+        if(response.status === 200)
+        {
+            return response.json();
+                    
+        }
+        else if (response.status === 400)
+        {
+            throw "Account already exists or Syntax is incorrect"
+        }
+        else
+        {
+            throw "something went wrong"
+        }
       
             })
-            .catch((error) =>{
+            .then(async (responseJson) => {
+                console.log(responseJson);
+                await AsyncStorage.setItem("whatsthat_user_id",responseJson.id);
+                await AsyncStorage.setItem("whatsthat_session_token",responseJson.token);
+                this.props.navigation.navigate('Home')
+            })
+            .catch((error) =>
+            {
               console.log(error);
             });
         }
-        componentDidMount(){
-          this.getData();
-
-    }
 
     render(){
         return (
@@ -109,7 +124,6 @@ export default class LoginScreen extends Component {
                         <TouchableOpacity onPress={this._onPressButton} >
                             <View style={styles.button}>
                                 <Text style={styles.buttonText}>Login</Text>
-                                <ActivityIndicator/>
                             </View>
                         </TouchableOpacity>
                     </View>

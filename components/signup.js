@@ -10,8 +10,8 @@ export default class Signup extends Component {
         super(props);
 
         this.state = {
-            firstName:"",
-            lastName:"",
+            first_name:"",
+            last_name:"",
             email: "",
             password: "",
             error: "", 
@@ -25,7 +25,7 @@ export default class Signup extends Component {
         this.setState({submitted: true})
         this.setState({error: ""})
 
-        if(!(this.state.firstName && this.state.lastName)){
+        if(!(this.state.first_name && this.state.last_name)){
             this.setState({error: "Must enter first name and second name"})
             return;
         }
@@ -51,74 +51,82 @@ export default class Signup extends Component {
         console.log("Validated and ready to send to the API")
 
         this.state ={
-            isLoading: true,
-            signupData: [],
-            first_name: "",
-            last_name: "",
-            email: "",
-            password: "",
+            first_name: this.state.first_name,
+            last_name: this.state.last_name,
+            email: this.state.email,
+            password: this.state.password
           }
+        
+        return fetch('http://127.0.0.1:3333/api/1.0.0/user',
+        {
+          method : 'post',
+          headers: { 'Content-Type': 'application/json'},
+          body: JSON.stringify(this.state)
+        })
+        .then((response) => {
+      
+        if(response.status === 201)
+        {
+            return response.json();
+                    
         }
-        // getData(){
-        //   return fetch('http://127.0.0.1:3333/api/1.0.0/user')
-        //   method : 'POST',
-        //   headers: { 'Content-Type': 'application/json'},
-        //   body: JSON.stringify({
-        //   first_name: this.state.first_name,
-        //   last_name: this.state.last_name,
-        //   email: this.state.email,
-        //   password: this.state.password
-
-        //     .then((response) => response.json())
-        //     .then((responseJson) => {
+        else if (response.status === 200)
+        {
+            throw "Email already exists or Password is not strong enough"
+        }
+        else if (response.status === 400)
+        {
+            throw "Account already exists or Syntax is incorrect"
+        }
+        else
+        {
+            throw "something went wrong"
+        }
       
-        //       this.setState({
-        //         isLoading: false,
-        //         signupData: responseJson,
-        //       });
-      
-        //     })
-        //     .catch((error) =>{
-        //       console.log(error);
-        //     });
-        // }
-        // componentDidMount(){
-        //   this.getData();
+            })
+            .then((responseJson) => {
+                console.log("user created : " , responseJson);
+                this.props.navigation.navigate('Login')
+            })
+            .catch((error) =>
+            {
+              console.log(error);
+            });
+        }
 
-
-    }
+    
 
     render(){
         return (
             <View style={styles.flexContainer}>
 
                 <View style={styles.viewOne}>
-                <View style={styles.firstName}>
+                <View style={styles.first_name}>
                         <Text>First Name:</Text>
                         <TextInput
                             style={{height: 40, borderWidth: 1, width: "100%", backgroundColor: "white"}}
                             placeholder="Enter First Name"
-                            onChangeText={firstName => this.setState({firstName})}
-                            defaultValue={this.state.firstName}
+                            onChangeText={first_name => this.setState({first_name})}
+                            defaultValue={this.state.first_name}
                         />
 
                         <>
-                            {this.state.submitted && !this.state.firstName &&
+                            {this.state.submitted && !this.state.first_name &&
                                 <Text style={styles.error}>*First name is required</Text>
                             }
                         </>
                     </View>
-                    <View style={styles.lastName}>
+                    <View style={styles.last_name}>
                         <Text>Last Name:</Text>
                         <TextInput
                             style={{height: 40, borderWidth: 1, width: "100%", backgroundColor: "white"}}
                             placeholder="Enter Last Name"
-                            onChangeText={lastName => this.setState({lastName})}
-                            defaultValue={this.state.lastName}
+                            onChangeText={last_name => this.setState({last_name})}
+                            defaultValue={this.state.last_name}
                         />
 
                         <>
-                            {this.state.submitted && !this.state.lastName &&
+                            {this.state.submitted && !this.state.last_name &&
                                 <Text style={styles.error}>*Last name is required</Text>
                             }
                         </>
@@ -160,7 +168,6 @@ export default class Signup extends Component {
                         <TouchableOpacity onPress={this._onPressButton}>
                             <View style={styles.button}>
                                 <Text style={styles.buttonText}>Sign in</Text>
-                                <ActivityIndicator/>
                             </View>
                         </TouchableOpacity>
                     </View>
@@ -186,12 +193,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center', // can be flex-start (default), flex-end, center, space-between, space-around, space-evenly
         alignItems: 'center' //can be stretch (default), flex-start, flex-end, center, baseline
     },
-    firstName:
+    first_name:
     {
         marginBottom: 5,
         padding: 20
     },
-    lastName:
+    last_name:
     {
         marginBottom: 5,
         padding: 20
